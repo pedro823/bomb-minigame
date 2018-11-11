@@ -1,0 +1,11 @@
+ARDUINO NANO
+
+PINS -> WHERE TO GO
+
+A4 -> accelerometers' SDA
+A5 -> accelerometers' SCL
+5V -> accelerometers' VCC
+accelerometers' GND -> GND
+
+D3 -> Blue LED's positive leg
+LED's GNDs -> GND
