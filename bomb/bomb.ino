@@ -7,11 +7,24 @@
 // A4 and A5 are for Accelerometer
 #define YELLOW_CHALL1 A6
 #define YELLOW_CHALL2 A7
+#define YELLOW_CHALL3 0
+#define YELLOW_CHALL4 1
+
 #define BLUE_LED 3
+#define YELLOW_LED A0
 #define GREEN_LED 7
+
 #define GREEN_CHALL1 8
 #define GREEN_CHALL2 9
 #define GREEN_CHALL3 10
+
+enum button_pressed {
+  NO_BUTTON,
+  BUTTON1,
+  BUTTON2,
+  BUTTON3,
+  BUTTON4
+};
 
 typedef struct {
   int x;
@@ -31,6 +44,7 @@ typedef struct {
 
 const static int MPU = 0x68;
 timer_control time_fuse;
+int buttons_are_correct = false;
 
 accelerometer_values get_accelerometer_values() {
   accelerometer_values values;
@@ -89,9 +103,64 @@ bool green_light() {
   return chall1 && chall2 && !chall3;
 }
 
+bool check_guess(int guess) {
+  static const int answer = 0x02030104;
+  int checker;
+  int answer_iterator = answer;
+  for (checker = guess & 0xff; guess; guess >>= 2) {
+    if (checker != answer_iterator & 0xff) {
+      return false;
+    }
+    answer_iterator >>= 2;
+    delay(1000);
+  }
+  return true;
+}
+
+enum button_pressed check_button_press() {
+  if (!digitalRead(YELLOW_CHALL1)) {
+    return BUTTON1;
+  }
+  if (!digitalRead(YELLOW_CHALL2)) {
+    return BUTTON2;
+  }
+  if (!digitalRead(YELLOW_CHALL3)) {
+    return BUTTON3;
+  }
+  if (!digitalRead(YELLOW_CHALL4)) {
+    return BUTTON4;
+  }
+  return NO_BUTTON;
+}
+
 bool yellow_light() {
   // Button challenge
-  return true;
+  static const int answer = 0x02030104;
+  static int current = 0x0;
+
+  if (buttons_are_correct) {
+    return true;
+  }
+
+  if (current > 0x01000000) {
+    // check if right
+    if (check_guess(current)) {
+      buttons_are_correct = true;
+      return true;
+    }
+
+    current = 0;
+    return false;
+  }
+  else {
+    // check if button was pressed
+    enum button_pressed bp = check_button_press();
+    if (bp != NO_BUTTON) {
+      current = (current << 2) | (int) bp;
+    }
+
+    return false;
+  }
 }
 
 void timer_begin(unsigned long int end_value) {
@@ -101,8 +170,7 @@ void timer_begin(unsigned long int end_value) {
 
 int timer_end_check() {
   time_fuse.now_time = time_fuse.end_time - (millis()-time_fuse.begin_time);
-  if(time_fuse.now_time < 0) return true;
-  else return false;
+  return time_fuse.now_time < 0;
 }
 
 
@@ -122,8 +190,14 @@ void setup() {
   pinMode(GREEN_CHALL2, INPUT_PULLUP);
   pinMode(GREEN_CHALL3, INPUT_PULLUP);
 
+  pinMode(YELLOW_CHALL1, INPUT_PULLUP);
+  pinMode(YELLOW_CHALL2, INPUT_PULLUP);
+  pinMode(YELLOW_CHALL3, INPUT_PULLUP);
+  pinMode(YELLOW_CHALL4, INPUT_PULLUP);
+
   pinMode(GREEN_LED, OUTPUT);
   pinMode(BLUE_LED, OUTPUT);
+  pinMode(YELLOW_LED, OUTPUT);
 }
 
 void defuse() {
@@ -138,6 +212,7 @@ void loop() {
 
   digitalWrite(BLUE_LED, blue ? HIGH : LOW);
   digitalWrite(GREEN_LED, green ? HIGH : LOW);
+  digitalWrite(YELLOW_LED, yellow ? HIGH : LOW);
 
   if (blue_light()
       && red_light()
