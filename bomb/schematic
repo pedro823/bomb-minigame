@@ -2,16 +2,23 @@ ARDUINO NANO
 
 PINS -> WHERE TO GO
 
+A1, A2 -> Reserved for red challenge
+A3 -> Reserved for red challenge
+
 A4 -> accelerometers' SDA
 A5 -> accelerometers' SCL
 5V -> accelerometers' VCC
 accelerometers' GND -> GND
+
+D2, D4, D5, D6, D11, D12 -> reserved for screen
 
 D3 -> Blue LED's positive leg
 D7 -> Green LED's positive leg
 D8 -> Wire to GND
 D9 -> Wire to GND
 D10 -> Wire to GND
-D11 -> Wire to GND
+
+2 analogicos
+6 digitais
 
 LED's GNDs -> GND

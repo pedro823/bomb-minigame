@@ -1,12 +1,17 @@
 #include <Wire.h>
 #include <math.h>
 
+#define RED_POTENTIOMETER1 A1
+#define RED_POTENTIOMETER2 A2
+#define RED_LED A3
+// A4 and A5 are for Accelerometer
+#define YELLOW_CHALL1 A6
+#define YELLOW_CHALL2 A7
 #define BLUE_LED 3
 #define GREEN_LED 7
 #define GREEN_CHALL1 8
 #define GREEN_CHALL2 9
 #define GREEN_CHALL3 10
-#define GREEN_CHALL4 11
 
 typedef struct {
   int x;
@@ -79,15 +84,9 @@ bool green_light() {
   // Unplugging a wire challenge
   int  chall1 = !digitalRead(GREEN_CHALL1),
        chall2 = !digitalRead(GREEN_CHALL2),
-       chall3 = !digitalRead(GREEN_CHALL3),
-       chall4 = !digitalRead(GREEN_CHALL4);
+       chall3 = !digitalRead(GREEN_CHALL3);
 
-  // Serial.print("1: "); Serial.print(chall1);
-  // Serial.print(" 2: "); Serial.print(chall2);
-  // Serial.print(" 3: "); Serial.print(chall3);
-  // Serial.print(" 4: "); Serial.println(chall4);
-
-  return chall1 && chall2 && chall3 && !chall4;
+  return chall1 && chall2 && !chall3;
 }
 
 bool yellow_light() {
@@ -122,7 +121,6 @@ void setup() {
   pinMode(GREEN_CHALL1, INPUT_PULLUP);
   pinMode(GREEN_CHALL2, INPUT_PULLUP);
   pinMode(GREEN_CHALL3, INPUT_PULLUP);
-  pinMode(GREEN_CHALL4, INPUT_PULLUP);
 
   pinMode(GREEN_LED, OUTPUT);
   pinMode(BLUE_LED, OUTPUT);
