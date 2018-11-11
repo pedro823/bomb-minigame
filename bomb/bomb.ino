@@ -1,6 +1,13 @@
 #include <Wire.h>
 #include <math.h>
 
+#define BLUE_LED 3
+#define GREEN_LED 7
+#define GREEN_CHALL1 8
+#define GREEN_CHALL2 9
+#define GREEN_CHALL3 10
+#define GREEN_CHALL4 11
+
 typedef struct {
   int x;
   int y;
@@ -39,23 +46,16 @@ bool blue_light() {
 
   // Serial.print("AcX = "); Serial.print(accel.x);
 
-  // //Envia valor Y do acelerometro para a serial e o LCD
   // Serial.print(" | AcY = "); Serial.print(accel.y);
    
-  // //Envia valor Z do acelerometro para a serial e o LCD
   // Serial.print(" | AcZ = "); Serial.print(accel.z);
    
-  // //Envia valor da temperatura para a serial e o LCD
-  // //Calcula a temperatura em graus Celsius
   // Serial.print(" | Tmp = "); Serial.print(accel.temperature/340.00+36.53);
    
-  // //Envia valor X do giroscopio para a serial e o LCD
   // Serial.print(" | GyX = "); Serial.print(accel.gx);
 
-  // //Envia valor Y do giroscopio para a serial e o LCD  
   // Serial.print(" | GyY = "); Serial.print(accel.gy);
    
-  // //Envia valor Z do giroscopio para a serial e o LCD
   // Serial.print(" | GyZ = "); Serial.println(accel.gz);
 
   return is_close_to(accel.x, 11500, 4200)
@@ -70,7 +70,17 @@ bool red_light() {
 
 bool green_light() {
   // Unplugging a wire challenge
-  return true;
+  int  chall1 = !digitalRead(GREEN_CHALL1),
+       chall2 = !digitalRead(GREEN_CHALL2),
+       chall3 = !digitalRead(GREEN_CHALL3),
+       chall4 = !digitalRead(GREEN_CHALL4);
+
+  // Serial.print("1: "); Serial.print(chall1);
+  // Serial.print(" 2: "); Serial.print(chall2);
+  // Serial.print(" 3: "); Serial.print(chall3);
+  // Serial.print(" 4: "); Serial.println(chall4);
+
+  return chall1 && chall2 && chall3 && !chall4;
 }
 
 bool yellow_light() {
@@ -88,7 +98,14 @@ void setup() {
   if (error != 0) {
     Serial.write("WARNING: Accelerometer not found.");
   }
-  pinMode(3, OUTPUT);
+
+  pinMode(GREEN_CHALL1, INPUT_PULLUP);
+  pinMode(GREEN_CHALL2, INPUT_PULLUP);
+  pinMode(GREEN_CHALL3, INPUT_PULLUP);
+  pinMode(GREEN_CHALL4, INPUT_PULLUP);
+
+  pinMode(GREEN_LED, OUTPUT);
+  pinMode(BLUE_LED, OUTPUT);
 }
 
 void defuse() {
@@ -100,7 +117,8 @@ void loop() {
        green  = green_light(),
        yellow = yellow_light();
 
-  digitalWrite(3, blue ? HIGH : LOW);
+  digitalWrite(BLUE_LED, blue ? HIGH : LOW);
+  digitalWrite(GREEN_LED, green ? HIGH : LOW);
 
   if (blue_light()
       && red_light()
