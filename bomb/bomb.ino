@@ -9,6 +9,13 @@
 #include <Wire.h>
 #include <math.h>
 
+#define BLUE_LED 3
+#define GREEN_LED 7
+#define GREEN_CHALL1 8
+#define GREEN_CHALL2 9
+#define GREEN_CHALL3 10
+#define GREEN_CHALL4 11
+
 typedef struct {
   int x;
   int y;
@@ -19,13 +26,23 @@ typedef struct {
   int gz;
 } accelerometer_values;
 
+typedef struct {
+  unsigned long int begin_time;
+  unsigned long int end_time;
+  long int now_time;
+} timer_control;
+
 const static int MPU = 0x68;
+
 #define pot1 A1
 #define pot2 A2
 #define red_led A3
 
 long rnd_interval1;
 long rnd_interval2;
+
+timer_control time_fuse;
+
 
 accelerometer_values get_accelerometer_values() {
   accelerometer_values values;
@@ -53,23 +70,16 @@ bool blue_light() {
 
   // Serial.print("AcX = "); Serial.print(accel.x);
 
-  // //Envia valor Y do acelerometro para a serial e o LCD
   // Serial.print(" | AcY = "); Serial.print(accel.y);
-
-  // //Envia valor Z do acelerometro para a serial e o LCD
+   
   // Serial.print(" | AcZ = "); Serial.print(accel.z);
-
-  // //Envia valor da temperatura para a serial e o LCD
-  // //Calcula a temperatura em graus Celsius
+   
   // Serial.print(" | Tmp = "); Serial.print(accel.temperature/340.00+36.53);
-
-  // //Envia valor X do giroscopio para a serial e o LCD
+   
   // Serial.print(" | GyX = "); Serial.print(accel.gx);
 
-  // //Envia valor Y do giroscopio para a serial e o LCD
   // Serial.print(" | GyY = "); Serial.print(accel.gy);
-
-  // //Envia valor Z do giroscopio para a serial e o LCD
+   
   // Serial.print(" | GyZ = "); Serial.println(accel.gz);
 
   return is_close_to(accel.x, 11500, 4200)
@@ -98,13 +108,35 @@ bool red_light() {
 
 bool green_light() {
   // Unplugging a wire challenge
-  return true;
+  int  chall1 = !digitalRead(GREEN_CHALL1),
+       chall2 = !digitalRead(GREEN_CHALL2),
+       chall3 = !digitalRead(GREEN_CHALL3),
+       chall4 = !digitalRead(GREEN_CHALL4);
+
+  // Serial.print("1: "); Serial.print(chall1);
+  // Serial.print(" 2: "); Serial.print(chall2);
+  // Serial.print(" 3: "); Serial.print(chall3);
+  // Serial.print(" 4: "); Serial.println(chall4);
+
+  return chall1 && chall2 && chall3 && !chall4;
 }
 
 bool yellow_light() {
   // Button challenge
   return true;
 }
+
+void timer_begin(unsigned long int end_value) {
+  time_fuse.end_time = end_value;
+  time_fuse.begin_time = millis();
+}
+
+int timer_end_check() {
+  time_fuse.now_time = time_fuse.end_time - (millis()-time_fuse.begin_time);
+  if(time_fuse.now_time < 0) return true;
+  else return false;
+}
+
 
 void setup() {
   Serial.begin(9600);
@@ -113,6 +145,7 @@ void setup() {
   Wire.begin();
   Wire.beginTransmission(MPU);
   Wire.write(0x6B); Wire.write(0);
+  timer_begin(60000);
   byte error = Wire.endTransmission(false);
   if (error != 0) {
     Serial.write("WARNING: Accelerometer not found.");
@@ -125,18 +158,29 @@ void setup() {
   pinMode(red_led, OUTPUT);
   rnd_interval1 = random(0, 9);
   rnd_interval2 = random(0, 9);
+
+  pinMode(GREEN_CHALL1, INPUT_PULLUP);
+  pinMode(GREEN_CHALL2, INPUT_PULLUP);
+  pinMode(GREEN_CHALL3, INPUT_PULLUP);
+  pinMode(GREEN_CHALL4, INPUT_PULLUP);
+
+  pinMode(GREEN_LED, OUTPUT);
+  pinMode(BLUE_LED, OUTPUT);
+
 }
 
 void defuse() {
 }
 
 void loop() {
+  timer_end_check();
   bool blue   = blue_light(),
        red    = red_light(),
        green  = green_light(),
        yellow = yellow_light();
 
-  digitalWrite(3, blue ? HIGH : LOW);
+  digitalWrite(BLUE_LED, blue ? HIGH : LOW);
+  digitalWrite(GREEN_LED, green ? HIGH : LOW);
 
   if (blue_light()
       && red_light()
@@ -147,3 +191,4 @@ void loop() {
 
   delay(500);
 }
+
