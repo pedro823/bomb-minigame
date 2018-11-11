@@ -11,7 +11,14 @@ typedef struct {
   int gz;
 } accelerometer_values;
 
+typedef struct {
+  unsigned long int begin_time;
+  unsigned long int end_time;
+  long int now_time;
+} timer_control;
+
 const static int MPU = 0x68;
+timer_control time_fuse;
 
 accelerometer_values get_accelerometer_values() {
   accelerometer_values values;
@@ -78,12 +85,25 @@ bool yellow_light() {
   return true;
 }
 
+void timer_begin(unsigned long int end_value) {
+  time_fuse.end_time = end_value;
+  time_fuse.begin_time = millis();
+}
+
+int timer_end_check() {
+  time_fuse.now_time = time_fuse.end_time - (millis()-time_fuse.begin_time);
+  if(time_fuse.now_time < 0) return true;
+  else return false;
+}
+
+
 void setup() {
   Serial.begin(9600);
   // Initializes MPU
   Wire.begin();
   Wire.beginTransmission(MPU);
   Wire.write(0x6B); Wire.write(0);
+  timer_begin(60000);
   byte error = Wire.endTransmission(false);
   if (error != 0) {
     Serial.write("WARNING: Accelerometer not found.");
@@ -95,6 +115,7 @@ void defuse() {
 }
 
 void loop() {
+  timer_end_check();
   bool blue   = blue_light(),
        red    = red_light(),
        green  = green_light(),
@@ -111,3 +132,4 @@ void loop() {
 
   delay(500);
 }
+
